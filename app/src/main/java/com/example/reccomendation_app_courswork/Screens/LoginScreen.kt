@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +60,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
@@ -80,12 +83,33 @@ fun LoginScreen(navController: NavController) {
     var timer by remember { mutableIntStateOf(0) }
     var failedSignUp by remember { mutableStateOf<Boolean?>(null) }
     var failedSignIn by remember { mutableStateOf<Boolean?>(null) }
+
+    LaunchedEffect(failedSignIn) {
+        if (failedSignIn == true) {
+            delay(4000)
+            failedSignIn = null
+        }
+    }
+    LaunchedEffect(connectionInternet) {
+        if (!connectionInternet) {
+            for (i in 1 downTo 0) {
+                timer = i
+                delay(1000)
+            }
+            enabledContinueButton = connectionInternet
+        }
+        if (timer == 0) {
+            connectionInternet = true
+            enabledContinueButton = true
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
+        Spacer(modifier = Modifier.height(20.dp))
         Text(
             text = if (signInorUp) "Авторизация" else "Регистрация",
             modifier = Modifier
@@ -110,19 +134,19 @@ fun LoginScreen(navController: NavController) {
                 .padding(start = 12.dp, end = 12.dp)
                 .border(
                     1.dp,
-                    if (emailError) colorResource(R.color.authorization_mark) else Color.Gray,
+                    if (emailError) colorResource(R.color.authorizationMark) else Color.Gray,
                     RoundedCornerShape(15.dp)
                 ),
             placeholder = { Text(text = "example@gmail.com", color = Color.Gray) },
             colors = TextFieldDefaults.textFieldColors
                 (
                 containerColor = Color.White,
-                cursorColor = colorResource(id = R.color.authorization_mark),
+                cursorColor = colorResource(id = R.color.authorizationMark),
                 focusedIndicatorColor = Color.White,
                 unfocusedIndicatorColor = Color.White,
 
-                focusedTextColor = if (emailError) colorResource(id = R.color.authorization_mark) else Color.Black,
-                unfocusedTextColor = if (emailError) colorResource(id = R.color.authorization_mark) else Color.Black
+                focusedTextColor = if (!emailError) colorResource(id = R.color.redLowOpacity) else Color.Black,
+                unfocusedTextColor = if (!emailError) colorResource(id = R.color.redLowOpacity) else Color.Black
             )
 
         )
@@ -140,7 +164,7 @@ fun LoginScreen(navController: NavController) {
                 .padding(start = 12.dp, end = 12.dp)
                 .border(
                     1.dp,
-                    if (passwordError) colorResource(R.color.authorization_mark) else Color.Gray,
+                    if (passwordError) colorResource(R.color.authorizationMark) else Color.Gray,
                     RoundedCornerShape(15.dp)
                 ),
             placeholder = { Text(text = "********", color = Color.Gray) },
@@ -148,34 +172,46 @@ fun LoginScreen(navController: NavController) {
             colors = TextFieldDefaults.textFieldColors
                 (
                 containerColor = Color.White,
-                cursorColor = colorResource(id = R.color.authorization_mark),
+                cursorColor = colorResource(id = R.color.authorizationMark),
                 focusedIndicatorColor = Color.White,
                 unfocusedIndicatorColor = Color.White,
 
-                focusedTextColor = if (passwordError) colorResource(id = R.color.authorization_mark) else Color.Black,
-                unfocusedTextColor = if (passwordError) colorResource(id = R.color.authorization_mark) else Color.Black
+                focusedTextColor = if (!passwordError) colorResource(id = R.color.redLowOpacity) else Color.Black,
+                unfocusedTextColor = if (!passwordError) colorResource(id = R.color.redLowOpacity) else Color.Black
             )
 
         )
         Text(
-            text = if (signInorUp) "Забыли пароль?" else if (failedSignUp == true && !signInorUp) "Несуществующий email-адрес" else if (failedSignUp == false && !signInorUp) "На вашу почту отправлено письмо с подтверждением" else "Уже есть аккаунт?",
+            text = when {
+                signInorUp && failedSignIn == null-> "Забыли пароль?"
+                failedSignUp == true && !signInorUp -> "Email адрес уже используется"
+                failedSignUp == false && !signInorUp -> "На вашу почту отправлено письмо с подтверждением"
+                failedSignIn == true && signInorUp -> "Неверный логин или пароль"
+                else -> "Уже есть аккаунт?"
+            },
             modifier = Modifier
-                .wrapContentHeight()
+                .height(80.dp)
                 .wrapContentWidth()
                 .padding(12.dp)
                 .clickable {
                     if (signInorUp) showPopup = true else signInorUp = true
                 },
             textAlign = TextAlign.Center,
-            color = if (failedSignUp == false && !signInorUp) Color.Gray else colorResource(id = R.color.authorization_mark),
+            color = when {
+                failedSignUp == false && !signInorUp -> Color.Gray
+                (failedSignIn == true && signInorUp) || (failedSignUp == true && !signInorUp)-> colorResource(id = R.color.redLowOpacity)
+                else -> colorResource(id = R.color.authorizationMark)
+            },
             style = TextStyle(
                 fontSize = 16.sp,
-                textDecoration = if (failedSignUp == false && !signInorUp) null else TextDecoration.Underline
+                textDecoration = when {
+                    (failedSignUp == false && !signInorUp) || (failedSignUp == true && !signInorUp) -> null
+                    else -> TextDecoration.Underline
+                },
             )
 
 
         )
-        Spacer(modifier = Modifier.height(24.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -195,13 +231,13 @@ fun LoginScreen(navController: NavController) {
                     .padding(start = 12.dp, end = 12.dp)
                     .border(
                         1.dp,
-                        if (signInorUp) colorResource(id = R.color.authorization_mark) else Color.LightGray,
+                        if (signInorUp) colorResource(id = R.color.authorizationMark) else Color.LightGray,
                         RoundedCornerShape(15.dp)
                     ),
                 shape = RoundedCornerShape(15.dp),
 
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (signInorUp) colorResource(id = R.color.authorization_mark) else Color.White,
+                    containerColor = if (signInorUp) colorResource(id = R.color.authorizationMark) else Color.White,
                     contentColor = if (signInorUp) Color.White else Color.LightGray
                 )
             ) {
@@ -218,13 +254,13 @@ fun LoginScreen(navController: NavController) {
                     .padding(start = 12.dp, end = 12.dp)
                     .border(
                         1.dp,
-                        if (signInorUp) Color.LightGray else colorResource(id = R.color.authorization_mark),
+                        if (signInorUp) Color.LightGray else colorResource(id = R.color.authorizationMark),
                         RoundedCornerShape(15.dp)
                     ),
                 shape = RoundedCornerShape(15.dp),
 
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (signInorUp) Color.White else colorResource(id = R.color.authorization_mark),
+                    containerColor = if (signInorUp) Color.White else colorResource(id = R.color.authorizationMark),
                     contentColor = if (signInorUp) Color.LightGray else Color.White
                 )
             ) {
@@ -241,25 +277,31 @@ fun LoginScreen(navController: NavController) {
                         enabledContinueButton = true
                         if (!signInorUp) {
                             scope.launch {
-                                val signUpResult = signUpAndVerifyEmail(auth, email, password)
-                                failedSignUp = !signUpResult
-                                if (signUpResult) {
-                                    createDatabase(firestore, email)
-                                    Log.d("CreateDatabase", "Succesful")
+                                signUpAndVerifyEmail(auth, email, password) { success ->
+                                    if (success) {
+                                        failedSignUp = false
+                                        createDatabase(firestore, email)
+                                        Log.d("CreateDatabase", "Succesful")
+                                    }
+                                    else {
+                                        failedSignUp = true
+                                    }
+
                                 }
-                                Log.d("IsLoadingContext", isLoadingContext.toString())
                             }
 
                         } else {
-                            val result = signIn(auth, email, password, navController)
-                            if (result == false){
-                                failedSignIn = true
-                                Log.d("FailedSignIn","SignIn: $failedSignIn")
+                            signIn(auth, email, password, navController) { success ->
+                                if (!success) {
+                                    failedSignIn = true
+                                    Log.d("FailedSignIn", "SignIn: $failedSignIn")
+                                } else {
+                                    failedSignIn = false
+                                    Log.d("FailedSignIn", "SignIn: $failedSignIn")
+                                }
                             }
-                            else{
-                                failedSignIn = result
-                                Log.d("FailedSignIn","SignIn: $failedSignIn")
-                            }
+
+
                         }
                     } else {
                         enabledContinueButton = false
@@ -273,18 +315,18 @@ fun LoginScreen(navController: NavController) {
                 .padding(start = 12.dp, end = 12.dp)
                 .border(
                     1.dp,
-                    colorResource(id = R.color.authorization_mark),
+                    colorResource(id = R.color.authorizationMark),
                     RoundedCornerShape(15.dp)
                 ),
             shape = RoundedCornerShape(15.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
-                contentColor = colorResource(id = R.color.authorization_mark)
+                contentColor = colorResource(id = R.color.authorizationMark)
             )
         ) {
             Text(
                 text = if (enabledContinueButton) "Продолжить" else "Нет подключения к сети.\nПовторное подключение через $timer секунд.",
-                color = colorResource(id = R.color.authorization_mark),
+                color = if (enabledContinueButton) colorResource(id = R.color.authorizationMark) else Color.Black,
                 textAlign = TextAlign.Center
             )
         }
@@ -375,7 +417,7 @@ fun isNetworkAvailable(context: Context): Boolean {
 fun createDatabase(firestore: FirebaseFirestore, email: String): Boolean {
     return try {
         val userId = FirebaseAuth.getInstance().currentUser?.uid
-        val userRef = firestore.collection("Patients").document(userId!!)
+        val userRef = firestore.collection("Users").document(userId!!)
 
         userRef.get().addOnSuccessListener { document ->
             if (!document.exists()) {
@@ -395,14 +437,16 @@ fun createDatabase(firestore: FirebaseFirestore, email: String): Boolean {
     }
 }
 
-suspend fun signUpAndVerifyEmail(auth: FirebaseAuth, email: String, password: String): Boolean {
-    return try {
-        auth.createUserWithEmailAndPassword(email, password).await()
-        auth.currentUser?.sendEmailVerification()?.await()
-        true
+suspend fun signUpAndVerifyEmail(auth: FirebaseAuth, email: String, password: String, callback: (Boolean) -> Unit) {
+    try {
+        auth.createUserWithEmailAndPassword(email, password).addOnSuccessListener {
+            auth.currentUser?.sendEmailVerification()?.addOnSuccessListener {
+                callback(true)
+            }
+        }.await()
     } catch (e: Exception) {
         Log.d("MyAuthLog", "SignUp failed: ${e.message}")
-        false
+        callback(false)
     }
 }
 
@@ -410,8 +454,9 @@ private fun signIn(
     auth: FirebaseAuth,
     email: String,
     password: String,
-    navController: NavController
-):Boolean? {
+    navController: NavController,
+    callback: (Boolean) -> Unit
+) {
     try {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
@@ -423,16 +468,20 @@ private fun signIn(
                             popUpTo("LoginScreen") {
                                 inclusive = true
                             }
+                            callback(true)
                         }
                     } else {
                         Log.d("MyAuthLog", "SignIn is failure!")
+                        callback(false)
                     }
+                } else {
+                    callback(false)
                 }
+
             }
-        return false
-    }
-    catch (e:Exception){
-        Log.d("MyAuthLog","Exception: $e")
-        return false
+
+    } catch (e: Exception) {
+        Log.d("MyAuthLog", "Exception: $e")
+
     }
 }

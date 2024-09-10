@@ -11,6 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.reccomendation_app_courswork.Screens.LoginScreen
+import com.example.reccomendation_app_courswork.navigation.AppNavGraph
 import com.example.reccomendation_app_courswork.ui.theme.Reccomendation_app_coursworkTheme
 
 class MainActivity : ComponentActivity() {
@@ -18,6 +20,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            AppNavGraph()
         }
     }
 }
