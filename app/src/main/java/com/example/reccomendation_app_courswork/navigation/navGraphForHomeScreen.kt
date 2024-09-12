@@ -10,7 +10,7 @@ import com.example.reccomendation_app_courswork.Screens.HomeScreen
 
 @Composable
 fun NavControllerForHomeScreen(navHostController: NavHostController) {
-    NavHost(navHostController, startDestination = "CatalogScreen") {
+    NavHost(navHostController, startDestination = "ProfileScreen") {
         composable("HomeScreen") {
             HomeScreen()
         }

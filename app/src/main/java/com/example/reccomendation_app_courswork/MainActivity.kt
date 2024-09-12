@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.example.reccomendation_app_courswork.Screens.HomeScreen
 
 import com.example.reccomendation_app_courswork.navigation.AppNavGraph
 
@@ -12,7 +13,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AppNavGraph()
+            HomeScreen()
         }
     }
 }

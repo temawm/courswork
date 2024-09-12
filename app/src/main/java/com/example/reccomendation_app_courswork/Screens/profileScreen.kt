@@ -322,16 +322,16 @@ fun ProfileScreen() {
 
 fun updateInfo(
     userRef: DocumentReference,
-    patientName: String,
-    patientDate: String,
-    patientEmail: String
+    userName: String,
+    userDate: String,
+    userEmail: String
 ): Boolean {
     return try {
         userRef.get().addOnSuccessListener { document ->
             val userProfile = hashMapOf(
-                "name" to patientName,
-                "birthDate" to patientDate,
-                "email" to patientEmail,
+                "name" to userName,
+                "birthDate" to userDate,
+                "email" to userEmail,
                 "profileImageUrl" to ""
             )
             userRef.set(userProfile)
@@ -368,7 +368,7 @@ fun SelectImageFromGallery(onImageSelected: (Uri?) -> Unit, selectedImageUri: Ur
                 painter = rememberImagePainter(
                     data = selectedImageUri,
                 ),
-                contentDescription = "PatientPhoto",
+                contentDescription = "UserPhoto",
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer(

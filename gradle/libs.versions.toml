@@ -12,14 +12,24 @@ gmsVersion = "4.4.2"
 bomVersion = "33.2.0"
 navigationCompose = "2.8.0-beta05"
 coil = "2.0.0"
+converter = "2.9.0"
+retrofit = "2.9.0"
+okHttp = "4.9.3"
+logging-interceptor = "4.7.2"
 
 [libraries]
+
+squareup-okhttp-logging-interceptor = {group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "logging-interceptor"}
+squareup-okhttp = {group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okHttp"}
+squareup-retrofit2 = {group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit"}
+squareup-retrofit-converter = {group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "converter"}
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 androidx-navigation-compose = {module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose"}
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "bomVersion" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore-ktx"}
 firebase-storage = { group = "com.google.firebase", name = "firebase-storage-ktx"}
 firebase-auth = { module = "com.google.firebase:firebase-auth"}
+
 
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
