@@ -1,0 +1,39 @@
+{
+  "kind": "books#volumes", // Тип данных: всегда books#volumes для списка книг
+  "totalItems": 100, // Общее количество найденных книг
+  "items": [ // Массив найденных книг
+    {
+      "kind": "books#volume", // Тип ресурса: всегда books#volume для отдельной книги
+      "id": "zyTCAlFPjgYC", // Уникальный идентификатор книги
+      "etag": "cP6HV7B1xLw", // Хэш книги для проверки изменений
+      "selfLink": "https://www.googleapis.com/books/v1/volumes/zyTCAlFPjgYC", // Ссылка на API-ресурс этой книги
+      "volumeInfo": { // Основная информация о книге
+        "title": "Effective Java", // Название книги
+        "authors": ["Joshua Bloch"], // Список авторов книги (может быть пустым или null)
+        "publisher": "Addison-Wesley", // Издатель книги (может быть null)
+        "publishedDate": "2008-05-08", // Дата публикации книги (может быть формата YYYY или YYYY-MM-DD)
+        "description": "Provides best practices for writing reliable, maintainable Java code.", // Описание книги (может быть длинным текстом или null)
+        "industryIdentifiers": [ // Список идентификаторов книги (например, ISBN)
+          {
+            "type": "ISBN_10", // Тип идентификатора (ISBN_10 или ISBN_13)
+            "identifier": "0321356683" // Сам идентификатор
+          },
+          {
+            "type": "ISBN_13", // Другой тип идентификатора
+            "identifier": "9780321356680" // Сам идентификатор
+          }
+        ],
+        "pageCount": 346, // Количество страниц книги (может быть null)
+        "imageLinks": { // Ссылки на изображения обложки книги
+          "smallThumbnail": "http://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=5&edge=curl&source=gbs_api", // Ссылка на маленькую обложку
+          "thumbnail": "http://books.google.com/books/conte++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++..
+          nt?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api" // Ссылка на стандартную обложку
+        },
+        "language": "en", // Язык книги (ISO 639-1 код, например en для английского)
+        "previewLink": "http://books.google.com/books?id=zyTCAlFPjgYC&dq=java&hl=&cd=1&source=gbs_api", // Ссылка на предварительный просмотр книги
+        "infoLink": "http://books.google.com/books?id=zyTCAlFPjgYC&dq=java&hl=&source=gbs_api", // Ссылка на страницу с информацией о книге
+        "canonicalVolumeLink": "https://books.google.com/books/about/Effective_Java.html?hl=&id=zyTCAlFPjgYC" // Официальная ссылка на страницу книги в Google Books
+      }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-package com.example.reccomendation_app_courswork.Screens
+package com.example.reccomendation_app_courswork.Screens//package com.example.reccomendation_app_courswork.Screens
 
 import android.content.Context
 import android.content.Intent
@@ -6,6 +6,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.util.Log
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,24 +15,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.material.MaterialTheme.colors
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -138,18 +136,17 @@ fun LoginScreen(navController: NavController) {
                     RoundedCornerShape(15.dp)
                 ),
             placeholder = { Text(text = "example@gmail.com", color = Color.Gray) },
-            colors = TextFieldDefaults.textFieldColors
-                (
-                containerColor = Color.White,
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = Color.White,
+                focusedContainerColor = Color.White,
                 cursorColor = colorResource(id = R.color.authorizationMark),
                 focusedIndicatorColor = Color.White,
                 unfocusedIndicatorColor = Color.White,
+                focusedTextColor = if (!passwordError) colorResource(id = R.color.redLowOpacity) else Color.Black,
+                unfocusedTextColor = if (!passwordError) colorResource(id = R.color.redLowOpacity) else Color.Black
 
-                focusedTextColor = if (!emailError) colorResource(id = R.color.redLowOpacity) else Color.Black,
-                unfocusedTextColor = if (!emailError) colorResource(id = R.color.redLowOpacity) else Color.Black
             )
-
-        )
+            )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = password,
@@ -169,21 +166,20 @@ fun LoginScreen(navController: NavController) {
                 ),
             placeholder = { Text(text = "********", color = Color.Gray) },
             visualTransformation = PasswordVisualTransformation(),
-            colors = TextFieldDefaults.textFieldColors
-                (
-                containerColor = Color.White,
+            colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = Color.White,
+                focusedContainerColor = Color.White,
                 cursorColor = colorResource(id = R.color.authorizationMark),
                 focusedIndicatorColor = Color.White,
                 unfocusedIndicatorColor = Color.White,
-
                 focusedTextColor = if (!passwordError) colorResource(id = R.color.redLowOpacity) else Color.Black,
                 unfocusedTextColor = if (!passwordError) colorResource(id = R.color.redLowOpacity) else Color.Black
-            )
 
+            )
         )
         Text(
             text = when {
-                signInorUp && failedSignIn == null-> "Забыли пароль?"
+                signInorUp && failedSignIn == null -> "Забыли пароль?"
                 failedSignUp == true && !signInorUp -> "Email адрес уже используется"
                 failedSignUp == false && !signInorUp -> "На вашу почту отправлено письмо с подтверждением"
                 failedSignIn == true && signInorUp -> "Неверный логин или пароль"
@@ -199,7 +195,10 @@ fun LoginScreen(navController: NavController) {
             textAlign = TextAlign.Center,
             color = when {
                 failedSignUp == false && !signInorUp -> Color.Gray
-                (failedSignIn == true && signInorUp) || (failedSignUp == true && !signInorUp)-> colorResource(id = R.color.redLowOpacity)
+                (failedSignIn == true && signInorUp) || (failedSignUp == true && !signInorUp) -> colorResource(
+                    id = R.color.redLowOpacity
+                )
+
                 else -> colorResource(id = R.color.authorizationMark)
             },
             style = TextStyle(
@@ -282,8 +281,7 @@ fun LoginScreen(navController: NavController) {
                                         failedSignUp = false
                                         createDatabase(firestore, email)
                                         Log.d("CreateDatabase", "Succesful")
-                                    }
-                                    else {
+                                    } else {
                                         failedSignUp = true
                                     }
 
@@ -437,7 +435,12 @@ fun createDatabase(firestore: FirebaseFirestore, email: String): Boolean {
     }
 }
 
-suspend fun signUpAndVerifyEmail(auth: FirebaseAuth, email: String, password: String, callback: (Boolean) -> Unit) {
+suspend fun signUpAndVerifyEmail(
+    auth: FirebaseAuth,
+    email: String,
+    password: String,
+    callback: (Boolean) -> Unit
+) {
     try {
         auth.createUserWithEmailAndPassword(email, password).addOnSuccessListener {
             auth.currentUser?.sendEmailVerification()?.addOnSuccessListener {

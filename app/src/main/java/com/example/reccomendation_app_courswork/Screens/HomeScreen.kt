@@ -22,8 +22,11 @@ import com.example.reccomendation_app_courswork.navigation.AppNavGraph
 import com.example.reccomendation_app_courswork.navigation.NavControllerForHomeScreen
 
 sealed class BottomHomeScreenNavigation(val title: String, val iconId: Int, val route: String) {
-    object CatalogScreen: BottomHomeScreenNavigation("Каталог", R.drawable.catalogicon, "CatalogScreen")
-    object ProfileScreen: BottomHomeScreenNavigation("Профиль", R.drawable.profileicon, "ProfileScreen")
+    object CatalogScreen :
+        BottomHomeScreenNavigation("Каталог", R.drawable.catalogicon, "CatalogScreen")
+
+    object ProfileScreen :
+        BottomHomeScreenNavigation("Профиль", R.drawable.profileicon, "ProfileScreen")
 }
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
@@ -58,6 +61,9 @@ fun BottomNavigation(navController: NavController) {
                     Log.d("HomeScreen.kt", "navController started")
                     val route = item.route
                     navController.navigate(route) {
+                        popUpTo(navController.graph.startDestinationId) {
+                            inclusive = true
+                        }
                         launchSingleTop = true
                     }
                 },

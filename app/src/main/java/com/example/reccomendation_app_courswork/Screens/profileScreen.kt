@@ -1,3 +1,4 @@
+package com.example.reccomendation_app_courswork.Screens//package com.example.reccomendation_app_courswork.Screens
 import android.net.Uri
 import android.util.Log
 import coil.compose.rememberImagePainter
@@ -51,7 +52,6 @@ import androidx.compose.ui.unit.sp
 import com.example.reccomendation_app_courswork.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
@@ -181,10 +181,11 @@ fun ProfileScreen() {
                 .fillMaxWidth()
                 .padding(start = 12.dp, end = 12.dp, top = 12.dp),
             placeholder = { Text(text = userName!!, color = Color.Black) },
-            colors = TextFieldDefaults.textFieldColors
-                (
-                containerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Gray
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                focusedIndicatorColor = Color.LightGray
+
             )
         )
         TextField(
@@ -197,10 +198,11 @@ fun ProfileScreen() {
                 .fillMaxWidth()
                 .padding(start = 12.dp, end = 12.dp, top = 12.dp),
             placeholder = { Text(text = userEmail!!, color = Color.Black) },
-            colors = TextFieldDefaults.textFieldColors
-                (
-                containerColor = Color.Transparent,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
                 focusedIndicatorColor = Color.LightGray
+
             )
         )
         TextField(
@@ -213,10 +215,11 @@ fun ProfileScreen() {
                 .fillMaxWidth()
                 .padding(start = 12.dp, end = 12.dp, top = 12.dp),
             placeholder = { Text(text = userDate!!, color = Color.Black) },
-            colors = TextFieldDefaults.textFieldColors
-                (
-                containerColor = Color.Transparent,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
                 focusedIndicatorColor = Color.LightGray
+
             )
         )
         Spacer(modifier = Modifier.height(22.dp))
@@ -377,16 +380,6 @@ fun SelectImageFromGallery(onImageSelected: (Uri?) -> Unit, selectedImageUri: Ur
                     )
                     .align(Alignment.Center),
                 contentScale = ContentScale.Crop
-            )
-        }
-        else {
-            Text(
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Gray),
-                text = "Нажмите чтобы загрузить",
-                color = Color.Gray
             )
         }
     }
