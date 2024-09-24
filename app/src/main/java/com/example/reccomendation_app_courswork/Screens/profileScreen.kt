@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -143,6 +144,7 @@ fun ProfileScreen() {
                 tint = colorResource(id = R.color.authorizationMark),
                 modifier = Modifier.size(32.dp)
             )
+            Spacer(modifier = Modifier.width(12.dp))
         }
         Spacer(modifier = Modifier.height(12.dp))
         Spacer(
@@ -152,6 +154,7 @@ fun ProfileScreen() {
                 .background(Color.Gray)
         )
         Spacer(modifier = Modifier.height(30.dp))
+        if (userProfileImageUrl != null){
         SelectImageFromGallery(
             selectedImageUri = userProfileImageUrl,
             onImageSelected = { uri ->
@@ -166,8 +169,23 @@ fun ProfileScreen() {
                         }
                     }
                 }
+
             }
         )
+    }
+        else {
+            Box(
+                modifier = Modifier
+                    .size(196.dp)
+                    .padding(top = 16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(64.dp),
+                color = colorResource(id = R.color.authorizationMark)
+            )
+            }
+        }
 
 
         Spacer(modifier = Modifier.height(16.dp))
