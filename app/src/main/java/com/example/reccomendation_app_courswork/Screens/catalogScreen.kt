@@ -5,20 +5,15 @@ import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme.colors
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CardElevation
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -36,20 +31,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.example.reccomendation_app_courswork.R
 import com.example.reccomendation_app_courswork.googleBooks.BookItem
 import com.example.reccomendation_app_courswork.googleBooks.createGoogleBooksService
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.net.URLEncoder
 
 @Composable
-fun CatalogScreen() {
+fun CatalogScreen(navHostController: NavHostController) {
     var topBooks by remember { mutableStateOf<List<BookItem>>(emptyList()) }
     var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
     LaunchedEffect(Unit) {
@@ -57,8 +54,6 @@ fun CatalogScreen() {
             fetchTopBooks()
         }
     }
-
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -68,25 +63,31 @@ fun CatalogScreen() {
     ) {
         Spacer(modifier = Modifier.height(50.dp))
         if (topBooks.isNotEmpty()) {
-            var enabledHeart by remember { mutableStateOf(false) }
+
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier
                     .fillMaxSize()
-                    ) {
+            ) {
 
                 items(topBooks) { book ->
-                    Card (
+                    var enabledHeart by remember { mutableStateOf(false) }
+                    Card(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(6.dp),
+                            .padding(6.dp)
+                            .clickable {
+                                val gson = Gson()
+                                val bookJson = URLEncoder.encode(gson.toJson(book), "UTF-8")
+                                navHostController.navigate("BookCardScreen/$bookJson")
+                            },
                         elevation = CardDefaults.cardElevation(
                             defaultElevation = 12.dp
                         ),
                         colors = CardDefaults.cardColors(
                             containerColor = Color.White
                         )
-                    ){
+                    ) {
                         Column(
                             modifier = Modifier
                                 .width(230.dp)
@@ -135,30 +136,33 @@ fun CatalogScreen() {
                                         fontSize = 16.sp,
                                         color = Color.Black
                                     )
+                                    Spacer(modifier = Modifier.height(2.dp))
                                     Text(
                                         text = book.volumeInfo.authors?.get(0)!!,
                                         fontSize = 12.sp,
                                         color = Color.LightGray
                                     )
+                                    Spacer(modifier = Modifier.height(2.dp))
+
                                     Text(
-                                            modifier = Modifier
-                                                .fillMaxWidth(),
-                                    text = book.volumeInfo.publishedDate,
-                                    textAlign = TextAlign.Start,
-                                    fontSize = 10.sp,
-                                    color = Color.Gray
+                                        modifier = Modifier
+                                            .fillMaxWidth(),
+                                        text = book.volumeInfo.publishedDate,
+                                        textAlign = TextAlign.Start,
+                                        fontSize = 9.sp,
+                                        color = Color.Gray
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    Row (
+                                    Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(32.dp)
                                             .padding(start = 2.dp, end = 2.dp),
                                         horizontalArrangement = Arrangement.Center,
                                         verticalAlignment = Alignment.CenterVertically
-                                    ){
+                                    ) {
                                         Icon(
-                                            painter = painterResource(id = R.drawable.addicon) ,
+                                            painter = painterResource(id = R.drawable.addicon),
                                             contentDescription = "AddIcon",
                                             tint = Color.Black,
                                             modifier = Modifier
@@ -179,7 +183,7 @@ fun CatalogScreen() {
                                             tint = if (enabledHeart) Color.Red else Color.LightGray,
                                             modifier = Modifier
                                                 .size(32.dp)
-                                                .clickable { enabledHeart = true }
+                                                .clickable { enabledHeart = !enabledHeart }
                                         )
                                     }
                                 }
@@ -190,7 +194,6 @@ fun CatalogScreen() {
                         }
                     }
                 }
-
             }
         } else {
             Column(
