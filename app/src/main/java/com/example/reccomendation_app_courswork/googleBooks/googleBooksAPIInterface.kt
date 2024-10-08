@@ -10,6 +10,7 @@ interface GoogleBooksAPI {
         @Query("q") query: String = "bestseller",
         @Query("orderBy") orderBy: String = "relevance",
         @Query("maxResults") maxResults: Int = 10,
+        @Query("startIndex") startIndex: Int = 0,
         @Query("key") apiKey: String
     ): BookResponse
 }

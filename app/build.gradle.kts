@@ -53,10 +53,11 @@ android {
 }
 
 dependencies {
-
-    implementation("com.github.bumptech.glide:glide:4.15.1")
-    kapt("com.github.bumptech.glide:compiler:4.15.1")
-    implementation(libs.squareup.picasso)
+    implementation (libs.room.runtime)
+    kapt (libs.room.compiler)
+    implementation (libs.room.ktx)
+    implementation(libs.glide)
+    kapt(libs.glide.compiler)
     implementation(libs.squareup.okhttp.logging.interceptor)
     implementation(libs.squareup.okhttp)
     implementation(libs.squareup.retrofit2)

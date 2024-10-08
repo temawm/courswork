@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.example.reccomendation_app_courswork.R
@@ -42,18 +45,26 @@ import com.example.reccomendation_app_courswork.googleBooks.BookItem
 import com.example.reccomendation_app_courswork.googleBooks.createGoogleBooksService
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.net.URLEncoder
 
 @Composable
 fun CatalogScreen(navHostController: NavHostController) {
     var topBooks by remember { mutableStateOf<List<BookItem>>(emptyList()) }
-    var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    LaunchedEffect(Unit) {
-        topBooks = withContext(Dispatchers.IO) {
-            fetchTopBooks()
+    var isLoadingNextPage by remember { mutableStateOf(false) }
+    var startIndex by remember { mutableIntStateOf(0) }
+
+   LaunchedEffect(Unit) {
+       isLoadingNextPage = true
+        val newBooks = withContext(Dispatchers.IO) {
+            fetchTopBooks(startIndex = startIndex)
         }
+        topBooks = newBooks
+       startIndex += 10
+       isLoadingNextPage = false
     }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -70,11 +81,25 @@ fun CatalogScreen(navHostController: NavHostController) {
                     .fillMaxSize()
             ) {
 
-                items(topBooks) { book ->
-                    var enabledHeart by remember { mutableStateOf(false) }
+                items(topBooks,  key = { it.id }) { book ->
+                    var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
+                    if ((topBooks.lastIndex == topBooks.indexOf(book))) {
+                        LaunchedEffect(Unit) {
+                            isLoadingNextPage = true
+                            startIndex += 20
+                            val newBooks = withContext(Dispatchers.IO) {
+                                fetchTopBooks(startIndex)
+                            }
+                            topBooks = topBooks + newBooks
+                            delay(3000)
+                            isLoadingNextPage = false
+                        }
+                    }
+
                     Card(
                         modifier = Modifier
-                            .fillMaxSize()
+                            .width(230.dp)
+                            .height(350.dp)
                             .padding(6.dp)
                             .clickable {
                                 val gson = Gson()
@@ -88,112 +113,67 @@ fun CatalogScreen(navHostController: NavHostController) {
                             containerColor = Color.White
                         )
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .width(230.dp)
-                                .height(350.dp)
-                                .background(Color.White),
-                            verticalArrangement = Arrangement.Top,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-
-                            val imageUrl = book.volumeInfo.imageLinks?.thumbnail
-                            if (!imageUrl.isNullOrEmpty()) {
-                                Glide.with(LocalContext.current)
-                                    .asBitmap()
-                                    .load(imageUrl)
-                                    .into(object : CustomTarget<Bitmap>() {
-                                        override fun onResourceReady(
-                                            resource: Bitmap,
-                                            transition: Transition<in Bitmap>?
-                                        ) {
-                                            imageBitmap = resource
-                                        }
-
-                                        override fun onLoadCleared(placeholder: Drawable?) {
-
-                                        }
-                                    })
-                                imageBitmap?.let { bitmap ->
-                                    Image(
-                                        bitmap = bitmap.asImageBitmap(),
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .height(250.dp)
-                                            .width(180.dp)
-                                            .padding(start = 10.dp, end = 10.dp, top = 10.dp)
-                                    )
-                                }
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(start = 5.dp, end = 5.dp, top = 7.dp),
-                                    verticalArrangement = Arrangement.Top,
-                                    horizontalAlignment = Alignment.Start
-                                ) {
-                                    Text(
-                                        text = book.volumeInfo.title,
-                                        fontSize = 16.sp,
-                                        color = Color.Black
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = book.volumeInfo.authors?.get(0)!!,
-                                        fontSize = 12.sp,
-                                        color = Color.LightGray
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-
-                                    Text(
-                                        modifier = Modifier
-                                            .fillMaxWidth(),
-                                        text = book.volumeInfo.publishedDate,
-                                        textAlign = TextAlign.Start,
-                                        fontSize = 9.sp,
-                                        color = Color.Gray
-                                    )
-                                    Spacer(modifier = Modifier.height(2.dp))
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(32.dp)
-                                            .padding(start = 2.dp, end = 2.dp),
-                                        horizontalArrangement = Arrangement.Center,
-                                        verticalAlignment = Alignment.CenterVertically
+                        val imageUrl = book.volumeInfo.imageLinks?.thumbnail ?: ""
+                        if (imageUrl.isNotEmpty()) {
+                            Glide.with(LocalContext.current)
+                                .asBitmap()
+                                .load(imageUrl)
+                                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                .into(object : CustomTarget<Bitmap>() {
+                                    override fun onResourceReady(
+                                        resource: Bitmap,
+                                        transition: Transition<in Bitmap>?
                                     ) {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.addicon),
-                                            contentDescription = "AddIcon",
-                                            tint = Color.Black,
-                                            modifier = Modifier
-                                                .size(32.dp)
-                                        )
-                                        Text(
-                                            modifier = Modifier
-                                                .wrapContentWidth()
-                                                .padding(start = 25.dp, end = 25.dp),
-                                            text = "|",
-                                            textAlign = TextAlign.Center,
-                                            fontSize = 35.sp,
-                                            color = Color.Gray
-                                        )
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.favoriteheart),
-                                            contentDescription = "Heart",
-                                            tint = if (enabledHeart) Color.Red else Color.LightGray,
-                                            modifier = Modifier
-                                                .size(32.dp)
-                                                .clickable { enabledHeart = !enabledHeart }
-                                        )
+                                        imageBitmap = resource
                                     }
-                                }
 
-                            } else {
-                                Log.e("Glide", "Image URL is null or empty")
+                                    override fun onLoadCleared(placeholder: Drawable?) {}
+                                })
+                        } else {
+                            Log.e("Glide", "Image URL is null or empty")
+                        }
+                        if (imageBitmap!= null) {
+                            Image(
+                            bitmap = imageBitmap!!.asImageBitmap(),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .height(250.dp)
+                                .width(180.dp)
+                                .padding(start = 10.dp, end = 10.dp, top = 10.dp)
+                        )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 5.dp, end = 5.dp, top = 7.dp),
+                                verticalArrangement = Arrangement.Top,
+                                horizontalAlignment = Alignment.Start
+                            ) {
+                                Text(
+                                    text = book.volumeInfo.title,
+                                    fontSize = 16.sp,
+                                    color = Color.Black
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Text(
+                                    text = book.volumeInfo.authors?.joinToString(", ")?: "Автор неизвестен",
+                                    fontSize = 12.sp,
+                                    color = Color.LightGray
+                                )
+                                Spacer(modifier = Modifier.height(2.dp))
+
+                                Text(
+                                    modifier = Modifier
+                                        .fillMaxWidth(),
+                                    text = book.volumeInfo.publishedDate?: " ",
+                                    textAlign = TextAlign.Start,
+                                    fontSize = 9.sp,
+                                    color = Color.Gray
+                                )
                             }
                         }
                     }
                 }
+
             }
         } else {
             Column(
@@ -209,14 +189,13 @@ fun CatalogScreen(navHostController: NavHostController) {
             }
         }
     }
-
 }
 
-
-suspend fun fetchTopBooks(): List<BookItem> {
+suspend fun fetchTopBooks(startIndex: Int): List<BookItem> {
     return try {
         val response = createGoogleBooksService().getTopBooks(
-            maxResults = 6,
+            maxResults = 20,
+            startIndex = startIndex,
             apiKey = "AIzaSyD32TSLFrd1TCuroWwl06Ts78-oY0UiF2w"
         )
         response.items

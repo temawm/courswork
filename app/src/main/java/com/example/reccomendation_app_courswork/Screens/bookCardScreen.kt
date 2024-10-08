@@ -31,10 +31,10 @@ fun BookCardScreen(bookItem: BookItem) {
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        ImageLoader(imageUrl = bookItem.volumeInfo.imageLinks!!.thumbnail)
+        ImageLoader(imageUrl = bookItem.volumeInfo.imageLinks?.thumbnail ?: "")
         TextLoader(title = "Название", info = bookItem.volumeInfo.title )
         TextLoader(title = "Авторы", info = if (bookItem.volumeInfo.authors?.isNotEmpty() == true) bookItem.volumeInfo.authors.toString() else "Неизвестны")
-        TextLoader(title = "Дата выпуска", info = bookItem.volumeInfo.publishedDate)
+        TextLoader(title = "Дата выпуска", info = bookItem.volumeInfo.publishedDate?: "Неизвестна")
         TextLoader(title = "Описание", info = bookItem.volumeInfo.description?: "Нет")
         Log.d("BookItemInsideInfo", bookItem.volumeInfo.title)
     }

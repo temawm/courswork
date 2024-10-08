@@ -7,22 +7,26 @@ junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.6"
 activityCompose = "1.9.2"
-composeBom = "2024.09.02"
+composeBom = "2024.09.03"
 gmsVersion = "4.4.2"
-bomVersion = "33.3.0"
-navigationCompose = "2.8.1"
+bomVersion = "33.4.0"
+navigationCompose = "2.8.2"
 coil = "2.0.0"
 converter = "2.9.0"
 retrofit = "2.9.0"
 okHttp = "4.9.3"
 logging-interceptor = "4.7.2"
-picasso = "2.71828"
+glide = "4.15.1"
+room = "2.6.1"
 
 
 
 [libraries]
-
-squareup-picasso = {group="com.squareup.picasso", name = "picasso", version.ref = "picasso"}
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
+glide-compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "glide" }
 squareup-okhttp-logging-interceptor = {group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "logging-interceptor"}
 squareup-okhttp = {group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okHttp"}
 squareup-retrofit2 = {group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit"}
