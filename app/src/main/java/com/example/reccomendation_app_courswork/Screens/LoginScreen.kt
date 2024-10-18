@@ -15,10 +15,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -26,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -33,6 +36,7 @@ import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -62,429 +66,255 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(navController: NavController) {
-    val firestore = Firebase.firestore
-    val scope = rememberCoroutineScope()
-    var isLoadingContext by remember { mutableStateOf(false) }
-    val auth = Firebase.auth
+fun LoginScreen(
+    navController: NavController,
+    loginViewModel: LoginViewModel
+) {
+    val uiState by loginViewModel.uiState.collectAsState()
     val context = LocalContext.current
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var emailError by remember { mutableStateOf(false) }
-    var passwordError by remember { mutableStateOf(false) }
-    var showPopup by remember { mutableStateOf(false) }
-    var signInorUp by remember { mutableStateOf(true) }
-    var connectionInternet by remember { mutableStateOf(true) }
-    var enabledContinueButton by remember { mutableStateOf(true) }
-    var timer by remember { mutableIntStateOf(0) }
-    var failedSignUp by remember { mutableStateOf<Boolean?>(null) }
-    var failedSignIn by remember { mutableStateOf<Boolean?>(null) }
+    var timer = 0
 
-    LaunchedEffect(failedSignIn) {
-        if (failedSignIn == true) {
-            delay(4000)
-            failedSignIn = null
-        }
-    }
-    LaunchedEffect(connectionInternet) {
-        if (!connectionInternet) {
-            for (i in 1 downTo 0) {
-                timer = i
+    LaunchedEffect(uiState.connectionInternet) {
+        if (!uiState.connectionInternet) {
+            for (i in 5 downTo 0) {
                 delay(1000)
+                timer = i
             }
-            enabledContinueButton = connectionInternet
-        }
-        if (timer == 0) {
-            connectionInternet = true
-            enabledContinueButton = true
+            loginViewModel.updateConnectionState(true)
+            loginViewModel.updateContinueButtonState(true)
         }
     }
-    Column(
-        modifier = Modifier
-            .fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        Spacer(modifier = Modifier.height(20.dp))
-        Text(
-            text = if (signInorUp) "Авторизация" else "Регистрация",
+
+    if (!uiState.isLoadingContext) {
+        Column(
             modifier = Modifier
-                .wrapContentWidth()
-                .wrapContentHeight()
-                .padding(top = 20.dp),
-            fontSize = 38.sp,
-            color = Color.Black
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-        TextField(
-            value = email,
-            onValueChange = {
-                email = it
-                emailError = validateEmail(email)
-            },
-            label = { Text("Email", color = Color.Gray) },
-            singleLine = true,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 12.dp, end = 12.dp)
-                .border(
-                    1.dp,
-                    if (emailError) colorResource(R.color.authorizationMark) else Color.Gray,
-                    RoundedCornerShape(15.dp)
-                ),
-            placeholder = { Text(text = "example@gmail.com", color = Color.Gray) },
-            colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = Color.White,
-                focusedContainerColor = Color.White,
-                cursorColor = colorResource(id = R.color.authorizationMark),
-                focusedIndicatorColor = Color.White,
-                unfocusedIndicatorColor = Color.White,
-                focusedTextColor = if (!passwordError) colorResource(id = R.color.redLowOpacity) else Color.Black,
-                unfocusedTextColor = if (!passwordError) colorResource(id = R.color.redLowOpacity) else Color.Black
-
-            )
-            )
-        Spacer(modifier = Modifier.height(16.dp))
-        TextField(
-            value = password,
-            onValueChange = {
-                password = it
-                passwordError = validatePassword(password)
-            },
-            label = { Text("Password", color = Color.Gray) },
-            singleLine = true,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 12.dp, end = 12.dp)
-                .border(
-                    1.dp,
-                    if (passwordError) colorResource(R.color.authorizationMark) else Color.Gray,
-                    RoundedCornerShape(15.dp)
-                ),
-            placeholder = { Text(text = "********", color = Color.Gray) },
-            visualTransformation = PasswordVisualTransformation(),
-            colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = Color.White,
-                focusedContainerColor = Color.White,
-                cursorColor = colorResource(id = R.color.authorizationMark),
-                focusedIndicatorColor = Color.White,
-                unfocusedIndicatorColor = Color.White,
-                focusedTextColor = if (!passwordError) colorResource(id = R.color.redLowOpacity) else Color.Black,
-                unfocusedTextColor = if (!passwordError) colorResource(id = R.color.redLowOpacity) else Color.Black
-
-            )
-        )
-        Text(
-            text = when {
-                signInorUp && failedSignIn == null -> "Забыли пароль?"
-                failedSignUp == true && !signInorUp -> "Email адрес уже используется"
-                failedSignUp == false && !signInorUp -> "На вашу почту отправлено письмо с подтверждением"
-                failedSignIn == true && signInorUp -> "Неверный логин или пароль"
-                else -> "Уже есть аккаунт?"
-            },
-            modifier = Modifier
-                .height(80.dp)
-                .wrapContentWidth()
-                .padding(12.dp)
-                .clickable {
-                    if (signInorUp) showPopup = true else signInorUp = true
-                },
-            textAlign = TextAlign.Center,
-            color = when {
-                failedSignUp == false && !signInorUp -> Color.Gray
-                (failedSignIn == true && signInorUp) || (failedSignUp == true && !signInorUp) -> colorResource(
-                    id = R.color.redLowOpacity
-                )
-
-                else -> colorResource(id = R.color.authorizationMark)
-            },
-            style = TextStyle(
-                fontSize = 16.sp,
-                textDecoration = when {
-                    (failedSignUp == false && !signInorUp) || (failedSignUp == true && !signInorUp) -> null
-                    else -> TextDecoration.Underline
-                },
-            )
-
-
-        )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(55.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        )
-        {
-            Button(
-                onClick = {
-                    signInorUp = true
-                    failedSignUp = null
-                },
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = if (uiState.signInOrUp) "Авторизация" else "Регистрация",
                 modifier = Modifier
-                    .width(175.dp)
-                    .height(55.dp)
+                    .wrapContentWidth()
+                    .wrapContentHeight()
+                    .padding(top = 20.dp),
+                fontSize = 38.sp,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+            TextField(
+                value = uiState.email,
+                onValueChange = {
+                    loginViewModel.onEmailChanged(it)
+                },
+                label = { Text("Email", color = Color.Gray) },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
                     .padding(start = 12.dp, end = 12.dp)
                     .border(
                         1.dp,
-                        if (signInorUp) colorResource(id = R.color.authorizationMark) else Color.LightGray,
+                        if (uiState.emailError) colorResource(R.color.redLowOpacity) else Color.Gray,
                         RoundedCornerShape(15.dp)
                     ),
-                shape = RoundedCornerShape(15.dp),
-
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (signInorUp) colorResource(id = R.color.authorizationMark) else Color.White,
-                    contentColor = if (signInorUp) Color.White else Color.LightGray
+                placeholder = { Text(text = "example@gmail.com", color = Color.Gray) },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    cursorColor = colorResource(id = R.color.authorizationMark),
+                    focusedIndicatorColor = Color.White,
+                    unfocusedIndicatorColor = Color.White,
+                    focusedTextColor = if (uiState.emailError) colorResource(id = R.color.redLowOpacity) else Color.Black,
+                    unfocusedTextColor = if (uiState.emailError) colorResource(id = R.color.redLowOpacity) else Color.Black
                 )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            TextField(
+                value = uiState.password,
+                onValueChange = {
+                    loginViewModel.onPasswordChanged(it)
+                },
+                label = { Text("Password", color = Color.Gray) },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp, end = 12.dp)
+                    .border(
+                        1.dp,
+                        if (uiState.passwordError) colorResource(R.color.redLowOpacity) else Color.Gray,
+                        RoundedCornerShape(15.dp)
+                    ),
+                placeholder = { Text(text = "********", color = Color.Gray) },
+                visualTransformation = PasswordVisualTransformation(),
+                colors = TextFieldDefaults.colors(
+                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = Color.White,
+                    cursorColor = colorResource(id = R.color.authorizationMark),
+                    focusedIndicatorColor = Color.White,
+                    unfocusedIndicatorColor = Color.White,
+                    focusedTextColor = if (uiState.passwordError) colorResource(id = R.color.redLowOpacity) else Color.Black,
+                    unfocusedTextColor = if (uiState.passwordError) colorResource(id = R.color.redLowOpacity) else Color.Black
+                )
+            )
+
+            Text(
+                text = if (uiState.signInOrUp) "Забыли пароль?" else if (uiState.failedSignUp == true) "Несуществующий email-адрес" else if (uiState.failedSignUp == false) "На вашу почту отправлено письмо с подтверждением" else "Уже есть аккаунт?",
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .wrapContentWidth()
+                    .padding(12.dp)
+                    .clickable {
+                        if (uiState.signInOrUp) loginViewModel.showPopup() else loginViewModel.toggleSignInOrUp(true)
+                    },
+                textAlign = TextAlign.Center,
+                color = if (uiState.failedSignUp == false && !uiState.signInOrUp) Color.Gray else colorResource(id = R.color.authorizationMark),
+                style = TextStyle(
+                    fontSize = 16.sp,
+                    textDecoration = if (uiState.failedSignUp == false && !uiState.signInOrUp) null else TextDecoration.Underline
+                )
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(55.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
-                Text("Вход")
+                Button(
+                    onClick = { loginViewModel.toggleSignInOrUp(true) },
+                    modifier = Modifier
+                        .width(175.dp)
+                        .height(55.dp)
+                        .padding(start = 12.dp, end = 12.dp)
+                        .border(
+                            1.dp,
+                            if (uiState.signInOrUp) colorResource(id = R.color.authorizationMark) else Color.LightGray,
+                            RoundedCornerShape(15.dp)
+                        ),
+                    shape = RoundedCornerShape(15.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (uiState.signInOrUp) colorResource(id = R.color.authorizationMark) else Color.White,
+                        contentColor = if (uiState.signInOrUp) Color.White else Color.LightGray
+                    )
+                ) {
+                    Text("Вход")
+                }
+                Button(
+                    onClick = { loginViewModel.toggleSignInOrUp(false) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(55.dp)
+                        .padding(start = 12.dp, end = 12.dp)
+                        .border(
+                            1.dp,
+                            if (uiState.signInOrUp) Color.LightGray else colorResource(id = R.color.authorizationMark),
+                            RoundedCornerShape(15.dp)
+                        ),
+                    shape = RoundedCornerShape(15.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (uiState.signInOrUp) Color.White else colorResource(id = R.color.authorizationMark),
+                        contentColor = if (uiState.signInOrUp) Color.LightGray else Color.White
+                    )
+                ) {
+                    Text("Регистрация")
+                }
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             Button(
                 onClick = {
-                    signInorUp = false
-                    failedSignUp = null
+                    loginViewModel.onContinueButtonClick(context, navController)
                 },
+                enabled = uiState.enabledContinueButton,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(55.dp)
                     .padding(start = 12.dp, end = 12.dp)
                     .border(
                         1.dp,
-                        if (signInorUp) Color.LightGray else colorResource(id = R.color.authorizationMark),
+                        colorResource(id = R.color.authorizationMark),
                         RoundedCornerShape(15.dp)
                     ),
                 shape = RoundedCornerShape(15.dp),
-
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (signInorUp) Color.White else colorResource(id = R.color.authorizationMark),
-                    contentColor = if (signInorUp) Color.LightGray else Color.White
+                    containerColor = Color.White,
+                    contentColor = colorResource(id = R.color.authorizationMark)
                 )
             ) {
-                Text("Регистрация")
+                Text(
+                    text = if (uiState.enabledContinueButton) "Продолжить" else "Нет подключения к сети.\nПовторное подключение через $timer секунд.",
+                    color = colorResource(id = R.color.authorizationMark),
+                    textAlign = TextAlign.Center
+                )
             }
 
-        }
-        Spacer(modifier = Modifier.height(12.dp))
-        Button(
-            onClick = {
-                if (emailError && passwordError) {
-                    connectionInternet = isNetworkAvailable(context)
-                    if (connectionInternet) {
-                        enabledContinueButton = true
-                        if (!signInorUp) {
-                            scope.launch {
-                                signUpAndVerifyEmail(auth, email, password) { success ->
-                                    if (success) {
-                                        failedSignUp = false
-                                        createDatabase(firestore, email)
-                                        Log.d("CreateDatabase", "Succesful")
-                                    } else {
-                                        failedSignUp = true
+            if (uiState.showPopup) {
+                Popup(
+                    alignment = Alignment.Center,
+                    onDismissRequest = { loginViewModel.dismissPopup() }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(300.dp)
+                            .height(150.dp)
+                            .background(Color.White, shape = RoundedCornerShape(8.dp))
+                            .border(3.dp, Color.Black, RoundedCornerShape(8.dp))
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column {
+                            Text(text = "read readme.txt to continue", fontSize = 16.sp)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            BasicText(
+                                text = "Visit my GitHub",
+                                modifier = Modifier
+                                    .clickable {
+                                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                                            data = Uri.parse("https://github.com/temawm")
+                                        }
+                                        context.startActivity(intent)
                                     }
-
-                                }
-                            }
-
-                        } else {
-                            signIn(auth, email, password, navController) { success ->
-                                if (!success) {
-                                    failedSignIn = true
-                                    Log.d("FailedSignIn", "SignIn: $failedSignIn")
-                                } else {
-                                    failedSignIn = false
-                                    Log.d("FailedSignIn", "SignIn: $failedSignIn")
-                                }
-                            }
-
-
+                                    .padding(8.dp),
+                                style = TextStyle(
+                                    color = Color.Blue,
+                                    fontSize = 16.sp,
+                                    textDecoration = TextDecoration.Underline
+                                )
+                            )
                         }
-                    } else {
-                        enabledContinueButton = false
                     }
                 }
-            },
-            enabled = enabledContinueButton,
+            }
+        }
+    } else {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(55.dp)
-                .padding(start = 12.dp, end = 12.dp)
-                .border(
-                    1.dp,
-                    colorResource(id = R.color.authorizationMark),
-                    RoundedCornerShape(15.dp)
-                ),
-            shape = RoundedCornerShape(15.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White,
-                contentColor = colorResource(id = R.color.authorizationMark)
-            )
+                .fillMaxHeight(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = if (enabledContinueButton) "Продолжить" else "Нет подключения к сети.\nПовторное подключение через $timer секунд.",
-                color = if (enabledContinueButton) colorResource(id = R.color.authorizationMark) else Color.Black,
-                textAlign = TextAlign.Center
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Privacy policy",
-                fontSize = 16.sp,
+                text = "Загрузка...",
                 modifier = Modifier
-                    .wrapContentWidth()
                     .wrapContentHeight()
-                    .padding(top = 185.dp)
-                    .clickable {
-                        showPopup = true
-                    },
-                style = TextStyle(
-                    textDecoration = TextDecoration.Underline,
-                ),
-                color = Color.LightGray
+                    .wrapContentWidth(),
+                textAlign = TextAlign.Center,
+                color = Color.Gray,
+                fontSize = 24.sp
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            CircularProgressIndicator(
+                modifier = Modifier.size(64.dp),
+                color = colorResource(id = R.color.authorizationMark)
             )
         }
-
-        if (showPopup) {
-            Popup(
-                alignment = Alignment.Center,
-                onDismissRequest = { showPopup = false }
-            ) {
-                Box(
-                    modifier = Modifier
-                        .width(300.dp)
-                        .height(150.dp)
-                        .background(Color.White, shape = RoundedCornerShape(8.dp))
-                        .border(3.dp, Color.Black, RoundedCornerShape(8.dp))
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column {
-                        Text(text = "read readme.txt to continue", fontSize = 16.sp)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        BasicText(
-                            text = "Visit my GitHub",
-                            modifier = Modifier
-                                .clickable {
-                                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                                        data = Uri.parse("https://github.com/temawm")
-                                    }
-                                    context.startActivity(intent)
-                                }
-                                .padding(8.dp),
-                            style = TextStyle(
-                                color = Color.Blue,
-                                fontSize = 16.sp,
-                                textDecoration = TextDecoration.Underline
-                            )
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-private fun validateEmail(email: String): Boolean {
-    return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-}
-
-private fun validatePassword(password: String): Boolean {
-    return password.length >= 8
-}
-
-fun isNetworkAvailable(context: Context): Boolean {
-    val connectivityManager =
-        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    val network = connectivityManager.activeNetwork ?: return false
-    val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
-    return when {
-        activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
-        activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-        activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
-        else -> false
-    }
-}
-
-fun createDatabase(firestore: FirebaseFirestore, email: String): Boolean {
-    return try {
-        val userId = FirebaseAuth.getInstance().currentUser?.uid
-        val userRef = firestore.collection("Users").document(userId!!)
-
-        userRef.get().addOnSuccessListener { document ->
-            if (!document.exists()) {
-                val userProfile = hashMapOf(
-                    "name" to "",
-                    "birthDate" to "",
-                    "email" to email,
-                    "profileImageUrl" to ""
-                )
-                userRef.set(userProfile)
-            }
-        }
-        true
-    } catch (e: Exception) {
-        Log.d("CreateDatabase", "$e")
-        false
-    }
-}
-
-suspend fun signUpAndVerifyEmail(
-    auth: FirebaseAuth,
-    email: String,
-    password: String,
-    callback: (Boolean) -> Unit
-) {
-    try {
-        auth.createUserWithEmailAndPassword(email, password).addOnSuccessListener {
-            auth.currentUser?.sendEmailVerification()?.addOnSuccessListener {
-                callback(true)
-            }
-        }.await()
-    } catch (e: Exception) {
-        Log.d("MyAuthLog", "SignUp failed: ${e.message}")
-        callback(false)
-    }
-}
-
-private fun signIn(
-    auth: FirebaseAuth,
-    email: String,
-    password: String,
-    navController: NavController,
-    callback: (Boolean) -> Unit
-) {
-    try {
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val user = auth.currentUser
-                    if (user != null && user.isEmailVerified) {
-                        Log.d("MyAuthLog", "SignIn is successful and email is verified!")
-                        navController.navigate("HomeScreen") {
-                            popUpTo("LoginScreen") {
-                                inclusive = true
-                            }
-                            callback(true)
-                        }
-                    } else {
-                        Log.d("MyAuthLog", "SignIn is failure!")
-                        callback(false)
-                    }
-                } else {
-                    callback(false)
-                }
-
-            }
-
-    } catch (e: Exception) {
-        Log.d("MyAuthLog", "Exception: $e")
-
     }
 }

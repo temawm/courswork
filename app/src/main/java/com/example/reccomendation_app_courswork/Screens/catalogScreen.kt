@@ -43,6 +43,7 @@ import com.bumptech.glide.request.transition.Transition
 import com.example.reccomendation_app_courswork.R
 import com.example.reccomendation_app_courswork.googleBooks.BookItem
 import com.example.reccomendation_app_courswork.googleBooks.createGoogleBooksService
+import com.example.reccomendation_app_courswork.roomInterface.BookEntity
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -203,4 +204,15 @@ suspend fun fetchTopBooks(startIndex: Int): List<BookItem> {
         Log.e("BooksError", "Error fetching books: $e")
         emptyList()
     }
+}
+
+suspend fun insertBookDetailsInDatabase(book: BookItem, bitmap: Bitmap?): BookEntity {
+    return BookEntity(
+        id = book.id,
+        title = book.volumeInfo.title,
+        authors = book.volumeInfo.authors,
+        publishedDate = book.volumeInfo.publishedDate,
+        description = book.volumeInfo.description,
+        thumbnail = bitmap,
+    )
 }

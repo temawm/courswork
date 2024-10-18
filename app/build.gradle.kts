@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.gms)
+    alias(libs.plugins.hilt)
     kotlin("kapt")
 
 }
@@ -48,11 +49,16 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/gradle/incremental.annotation.processors"
         }
     }
 }
 
 dependencies {
+    kapt(libs.hilt.compiler)
+    implementation(libs.hilt)
+    implementation(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
     implementation (libs.room.runtime)
     kapt (libs.room.compiler)
     implementation (libs.room.ktx)
