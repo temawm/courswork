@@ -4,23 +4,18 @@ import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.util.Log
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,34 +32,14 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.example.reccomendation_app_courswork.R
-import com.example.reccomendation_app_courswork.googleBooks.BookItem
-import com.example.reccomendation_app_courswork.googleBooks.createGoogleBooksService
-import com.example.reccomendation_app_courswork.roomInterface.BookEntity
 import com.google.gson.Gson
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import java.net.URLEncoder
 
 @Composable
-fun CatalogScreen(navHostController: NavHostController) {
-    var topBooks by remember { mutableStateOf<List<BookItem>>(emptyList()) }
-    var isLoadingNextPage by remember { mutableStateOf(false) }
-    var startIndex by remember { mutableIntStateOf(0) }
-
-   LaunchedEffect(Unit) {
-       isLoadingNextPage = true
-        val newBooks = withContext(Dispatchers.IO) {
-            fetchTopBooks(startIndex = startIndex)
-        }
-        topBooks = newBooks
-       startIndex += 10
-       isLoadingNextPage = false
-    }
+fun CatalogScreen(navHostController: NavHostController, catalogScreenViewModel: CatalogScreenViewModel) {
 
     Column(
         modifier = Modifier
@@ -74,29 +49,19 @@ fun CatalogScreen(navHostController: NavHostController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(50.dp))
-        if (topBooks.isNotEmpty()) {
-
+        if (catalogScreenViewModel.topBooks.isNotEmpty()) {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier
                     .fillMaxSize()
             ) {
 
-                items(topBooks,  key = { it.id }) { book ->
+                items(catalogScreenViewModel.topBooks) { book ->
                     var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
-                    if ((topBooks.lastIndex == topBooks.indexOf(book))) {
-                        LaunchedEffect(Unit) {
-                            isLoadingNextPage = true
-                            startIndex += 20
-                            val newBooks = withContext(Dispatchers.IO) {
-                                fetchTopBooks(startIndex)
-                            }
-                            topBooks = topBooks + newBooks
-                            delay(3000)
-                            isLoadingNextPage = false
-                        }
+                    var enabledHeart by remember { mutableStateOf(false) }
+                    if ((catalogScreenViewModel.topBooks.lastIndex - 10 == catalogScreenViewModel.topBooks.indexOf(book)) && !catalogScreenViewModel.isLoadingNextPage) {
+                        catalogScreenViewModel.loadMoreBooks()
                     }
-
                     Card(
                         modifier = Modifier
                             .width(230.dp)
@@ -127,7 +92,6 @@ fun CatalogScreen(navHostController: NavHostController) {
                                     ) {
                                         imageBitmap = resource
                                     }
-
                                     override fun onLoadCleared(placeholder: Drawable?) {}
                                 })
                         } else {
@@ -138,7 +102,7 @@ fun CatalogScreen(navHostController: NavHostController) {
                             bitmap = imageBitmap!!.asImageBitmap(),
                             contentDescription = null,
                             modifier = Modifier
-                                .height(250.dp)
+                                .height(220.dp)
                                 .width(180.dp)
                                 .padding(start = 10.dp, end = 10.dp, top = 10.dp)
                         )
@@ -152,29 +116,61 @@ fun CatalogScreen(navHostController: NavHostController) {
                                 Text(
                                     text = book.volumeInfo.title,
                                     fontSize = 16.sp,
-                                    color = Color.Black
+                                    color = Color.Black,
+                                    maxLines = 1
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
                                     text = book.volumeInfo.authors?.joinToString(", ")?: "Автор неизвестен",
                                     fontSize = 12.sp,
-                                    color = Color.LightGray
+                                    color = Color.LightGray,
+                                    maxLines = 1
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
-
                                 Text(
                                     modifier = Modifier
                                         .fillMaxWidth(),
                                     text = book.volumeInfo.publishedDate?: " ",
                                     textAlign = TextAlign.Start,
                                     fontSize = 9.sp,
-                                    color = Color.Gray
+                                    color = Color.Gray,
+                                    maxLines = 1
                                 )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .wrapContentHeight()
+                                        .padding(top = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ){
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.addicon),
+                                        contentDescription = "Add a book",
+                                        tint = Color.Black,
+                                        modifier = Modifier.size(36.dp)
+                                    )
+                                    Text(
+                                        text = "|",
+                                        textAlign = TextAlign.Center,
+                                        color = Color.LightGray,
+                                        fontSize = 18.sp
+                                    )
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.favoriteheart),
+                                        contentDescription = "Favorite",
+                                        tint = if(enabledHeart) Color.Red else Color.Gray,
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clickable { enabledHeart = !enabledHeart }
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                }
                             }
                         }
                     }
                 }
-
             }
         } else {
             Column(
@@ -190,29 +186,4 @@ fun CatalogScreen(navHostController: NavHostController) {
             }
         }
     }
-}
-
-suspend fun fetchTopBooks(startIndex: Int): List<BookItem> {
-    return try {
-        val response = createGoogleBooksService().getTopBooks(
-            maxResults = 20,
-            startIndex = startIndex,
-            apiKey = "AIzaSyD32TSLFrd1TCuroWwl06Ts78-oY0UiF2w"
-        )
-        response.items
-    } catch (e: Exception) {
-        Log.e("BooksError", "Error fetching books: $e")
-        emptyList()
-    }
-}
-
-suspend fun insertBookDetailsInDatabase(book: BookItem, bitmap: Bitmap?): BookEntity {
-    return BookEntity(
-        id = book.id,
-        title = book.volumeInfo.title,
-        authors = book.volumeInfo.authors,
-        publishedDate = book.volumeInfo.publishedDate,
-        description = book.volumeInfo.description,
-        thumbnail = bitmap,
-    )
 }

@@ -1,11 +1,13 @@
 package com.example.reccomendation_app_courswork.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.reccomendation_app_courswork.Screens.BookCardScreen
 import com.example.reccomendation_app_courswork.Screens.CatalogScreen
+import com.example.reccomendation_app_courswork.Screens.CatalogScreenViewModel
 import com.example.reccomendation_app_courswork.Screens.HomeScreen
 import com.example.reccomendation_app_courswork.Screens.ProfileScreen
 import com.example.reccomendation_app_courswork.googleBooks.BookItem
@@ -20,7 +22,8 @@ fun NavControllerForHomeScreen(navHostController: NavHostController) {
             HomeScreen()
         }
         composable("CatalogScreen"){
-            CatalogScreen(navHostController)
+            val catalogScreenViewModel: CatalogScreenViewModel = hiltViewModel()
+            CatalogScreen(navHostController, catalogScreenViewModel)
         }
         composable("ProfileScreen") {
             ProfileScreen()
