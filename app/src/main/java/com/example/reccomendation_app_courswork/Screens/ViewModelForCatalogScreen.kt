@@ -46,7 +46,7 @@ class CatalogScreenViewModel @Inject constructor(): ViewModel() {
             val response = createGoogleBooksService().getTopBooks(
                 maxResults = 20,
                 startIndex = startIndex,
-                apiKey = "AIzaSyD32TSLFrd1TCureWwl06Ts78-oY0UiF2w"
+                apiKey = "AIzaSyD32TSLFrd1TCuroWwl06Ts78-oY0UiF2w"
             )
             response.items
         } catch (e: Exception) {

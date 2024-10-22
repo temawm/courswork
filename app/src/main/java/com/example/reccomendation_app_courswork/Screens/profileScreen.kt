@@ -35,6 +35,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,47 +67,9 @@ import kotlinx.coroutines.tasks.await
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 
-fun ProfileScreen() {
-
-    var userName by remember { mutableStateOf<String?>(null) }
-    var userEmail by remember { mutableStateOf<String?>(null) }
-    var userDate by remember { mutableStateOf<String?>(null) }
-    var userProfileImageUrl by remember { mutableStateOf<Uri?>(null) }
-    var changeFields by remember { mutableStateOf(false) }
+fun ProfileScreen(profileScreenViewModel: ProfileScreenViewModel) {
     val scrollState = rememberScrollState()
-    val firestore = Firebase.firestore
-    val userId = FirebaseAuth.getInstance().currentUser?.uid
-    val userRef = firestore.collection("Users").document(userId!!)
-
-
-    LaunchedEffect(Unit) {
-        userRef.get().addOnSuccessListener { document ->
-            if (document.exists()) {
-                userName = document.getString("name")
-                userDate = document.getString("birthDate")
-                userEmail = document.getString("email")
-                val profileImageUrl = document.getString("profileImageUrl")
-                Log.d("ProfileScreen", "profileImageUrl from Firestore: $profileImageUrl")
-                userProfileImageUrl = profileImageUrl?.let { Uri.parse(it) }
-                Log.d(
-                    "ProfileScreen",
-                    "User data loaded successfully: $userName, $userDate, $userEmail, $userProfileImageUrl"
-                )
-
-            } else {
-                Log.d("ProfileScreen", "User data not found, initializing new user data")
-
-                val userProfile = hashMapOf(
-                    "name" to "",
-                    "birthDate" to "",
-                    "email" to "",
-                    "profileImageUrl" to ""
-                )
-                userRef.set(userProfile)
-            }
-
-        }
-    }
+    val uiState by profileScreenViewModel.uiState.collectAsState()
 
     Column(
         modifier = Modifier
@@ -144,7 +107,6 @@ fun ProfileScreen() {
                 tint = colorResource(id = R.color.authorizationMark),
                 modifier = Modifier.size(32.dp)
             )
-            Spacer(modifier = Modifier.width(12.dp))
         }
         Spacer(modifier = Modifier.height(12.dp))
         Spacer(
@@ -154,15 +116,15 @@ fun ProfileScreen() {
                 .background(Color.Gray)
         )
         Spacer(modifier = Modifier.height(30.dp))
-        if (userProfileImageUrl != null){
+        if (uiState.profileImageUrl != null){
         SelectImageFromGallery(
-            selectedImageUri = userProfileImageUrl,
+            selectedImageUri = uiState.profileImageUrl,
             onImageSelected = { uri ->
-                userProfileImageUrl = uri
+                uiState.profileImageUrl = uri
                 Log.d("SelectImageFromGallery Call", "Uri is null: uri = $uri")
-                userProfileImageUrl?.let {
+                uiState.profileImageUrl?.let {
                     CoroutineScope(Dispatchers.IO).launch {
-                        if (uploadImageToFirebaseStorage(it, userRef)) {
+                        if (profileScreenViewModel.uploadImageToFirebaseStorage(it)) {
                             Log.d("uploadImageToFirebaseStorage", "Succesful")
                         } else {
                             Log.d("uploadImageToFirebaseStorage", "Failure")
@@ -190,15 +152,15 @@ fun ProfileScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
-            enabled = changeFields,
-            value = if (userName != null) userName!! else "",
-            onValueChange = { userName = it },
+            enabled = uiState.changeFields,
+            value = if (uiState.userName != null) uiState.userName!! else "",
+            onValueChange = { uiState.userName = it },
             label = { Text("Имя", color = Color.Gray) },
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 12.dp, end = 12.dp, top = 12.dp),
-            placeholder = { Text(text = userName!!, color = Color.Black) },
+            placeholder = { Text(text = uiState.userName!!, color = Color.Black) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
@@ -207,15 +169,15 @@ fun ProfileScreen() {
             )
         )
         TextField(
-            enabled = changeFields,
-            value = if (userEmail != null) userEmail!! else "",
-            onValueChange = { userEmail = it },
+            enabled = uiState.changeFields,
+            value = if (uiState.userEmail != null) uiState.userEmail!! else "",
+            onValueChange = { uiState.userEmail = it },
             label = { Text("Почта", color = Color.Gray) },
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 12.dp, end = 12.dp, top = 12.dp),
-            placeholder = { Text(text = userEmail!!, color = Color.Black) },
+            placeholder = { Text(text = uiState.userEmail!!, color = Color.Black) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
@@ -224,15 +186,15 @@ fun ProfileScreen() {
             )
         )
         TextField(
-            enabled = changeFields,
-            value = if (userDate != null) userDate!! else "",
-            onValueChange = { userDate = it },
+            enabled = uiState.changeFields,
+            value = if (uiState.userDate != null) uiState.userDate!! else "",
+            onValueChange = { uiState.userDate = it },
             label = { Text("Дата рождения", color = Color.Gray) },
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 12.dp, end = 12.dp, top = 12.dp),
-            placeholder = { Text(text = userDate!!, color = Color.Black) },
+            placeholder = { Text(text = uiState.userDate!!, color = Color.Black) },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.White,
                 unfocusedContainerColor = Color.White,
@@ -249,11 +211,11 @@ fun ProfileScreen() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            if (changeFields) {
+            if (uiState.changeFields) {
                 androidx.compose.material3.Button(
                     onClick = {
-                        changeFields = false
-                        updateInfo(userRef, userName!!, userDate!!, userEmail!!)
+                        uiState.changeFields = false
+                        profileScreenViewModel.updateInfo(uiState.userName!!, uiState.userDate!!, uiState.userEmail!!)
                     },
                     modifier = Modifier
                         .width(200.dp)
@@ -277,7 +239,7 @@ fun ProfileScreen() {
                 }
                 androidx.compose.material3.Button(
                     onClick = {
-                        changeFields = false
+                        uiState.changeFields = false
                     },
                     modifier = Modifier
                         .width(210.dp)
@@ -302,7 +264,7 @@ fun ProfileScreen() {
             } else {
                 androidx.compose.material3.Button(
                     onClick = {
-                        changeFields = true
+                        uiState.changeFields = true
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -338,32 +300,6 @@ fun ProfileScreen() {
 
 
 
-    }
-}
-
-fun updateInfo(
-    userRef: DocumentReference,
-    userName: String,
-    userDate: String,
-    userEmail: String
-): Boolean {
-    return try {
-        userRef.get().addOnSuccessListener { document ->
-            val userProfile = hashMapOf(
-                "name" to userName,
-                "birthDate" to userDate,
-                "email" to userEmail,
-                "profileImageUrl" to ""
-            )
-            userRef.set(userProfile)
-            Log.d("updateInfo", "User info updated successfully")
-
-        }
-
-        true
-    } catch (e: Exception) {
-        Log.d("updateInfo", "$e")
-        false
     }
 }
 
@@ -403,41 +339,4 @@ fun SelectImageFromGallery(onImageSelected: (Uri?) -> Unit, selectedImageUri: Ur
     }
     Log.d("SelectImageFromGallery", "Finished")
 
-}
-
-suspend fun uploadImageToFirebaseStorage(
-    uri: Uri?,
-    userRef: DocumentReference
-): Boolean {
-    return try {
-        if (uri != null) {
-            val storageRef = Firebase.storage.reference
-            val imageRef = storageRef.child("images/${uri.lastPathSegment}")
-            imageRef.putFile(uri).await()
-            val downloadUrl = getDownloadUrlForImage("images/${uri.lastPathSegment}")
-            if (downloadUrl != null) {
-                userRef.update("profileImageUrl", downloadUrl).await()
-                Log.d("FirebaseStorage", "Image URL updated successfully: $downloadUrl")
-            }
-            true
-        } else {
-            false
-        }
-    } catch (e: Exception) {
-        Log.e("FirebaseUpload", "Upload failed", e)
-        false
-    }
-}
-suspend fun getDownloadUrlForImage(imagePath: String): String? {
-    val storage = FirebaseStorage.getInstance()
-    val storageRef = storage.reference
-    val imageRef = storageRef.child(imagePath)
-
-    return try {
-        val downloadUrl = imageRef.downloadUrl.await()
-        downloadUrl.toString()
-    } catch (e: Exception) {
-        Log.e("FirebaseStorage", "Failed to get download URL", e)
-        null
-    }
 }

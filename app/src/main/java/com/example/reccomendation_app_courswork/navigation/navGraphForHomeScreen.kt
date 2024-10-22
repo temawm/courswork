@@ -10,6 +10,7 @@ import com.example.reccomendation_app_courswork.Screens.CatalogScreen
 import com.example.reccomendation_app_courswork.Screens.CatalogScreenViewModel
 import com.example.reccomendation_app_courswork.Screens.HomeScreen
 import com.example.reccomendation_app_courswork.Screens.ProfileScreen
+import com.example.reccomendation_app_courswork.Screens.ProfileScreenViewModel
 import com.example.reccomendation_app_courswork.googleBooks.BookItem
 import com.example.reccomendation_app_courswork.googleBooks.BookResponse
 import com.google.gson.Gson
@@ -26,7 +27,8 @@ fun NavControllerForHomeScreen(navHostController: NavHostController) {
             CatalogScreen(navHostController, catalogScreenViewModel)
         }
         composable("ProfileScreen") {
-            ProfileScreen()
+            val profileScreenViewModel: ProfileScreenViewModel = hiltViewModel()
+            ProfileScreen(profileScreenViewModel = profileScreenViewModel)
         }
         composable("BookCardScreen/{bookItem}") { backStackEntry ->
             val gson = Gson()
