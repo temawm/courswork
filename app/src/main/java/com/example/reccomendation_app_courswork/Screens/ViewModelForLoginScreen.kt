@@ -64,7 +64,7 @@ class LoginViewModel @Inject constructor() : ViewModel() {
         _uiState.value = _uiState.value.copy(connectionInternet = isConnected)
     }
 
-    fun createDatabase(firestore: FirebaseFirestore, email: String): Boolean {
+    private fun createDatabase(firestore: FirebaseFirestore, email: String): Boolean {
         return try {
             val userId = FirebaseAuth.getInstance().currentUser?.uid
             val userRef = firestore.collection("Patients").document(userId!!)
@@ -87,7 +87,7 @@ class LoginViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    suspend fun signUpAndVerifyEmail(auth: FirebaseAuth, email: String, password: String): Boolean {
+    private suspend fun signUpAndVerifyEmail(auth: FirebaseAuth, email: String, password: String): Boolean {
         return try {
             auth.createUserWithEmailAndPassword(email, password).await()
             auth.currentUser?.sendEmailVerification()?.await()
@@ -98,7 +98,7 @@ class LoginViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun signIn(auth: FirebaseAuth, email: String, password: String, navController: NavController) {
+    private fun signIn(auth: FirebaseAuth, email: String, password: String, navController: NavController) {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener {
                 if (it.isSuccessful) {
@@ -123,7 +123,7 @@ class LoginViewModel @Inject constructor() : ViewModel() {
         return password.length >= 8
     }
 
-    fun isNetworkAvailable(context: Context): Boolean {
+    private fun isNetworkAvailable(context: Context): Boolean {
         val connectivityManager =
             context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = connectivityManager.activeNetwork ?: return false

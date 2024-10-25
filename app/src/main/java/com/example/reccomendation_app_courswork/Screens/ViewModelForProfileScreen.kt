@@ -1,32 +1,9 @@
 package com.example.reccomendation_app_courswork.Screens
 
 import android.net.Uri
-import android.provider.ContactsContract.Profile
 import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
-import coil.compose.rememberImagePainter
-import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.DocumentSnapshot
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
@@ -47,10 +24,9 @@ data class ProfileUiState(
 
 @HiltViewModel
 class ProfileScreenViewModel @Inject constructor() : ViewModel() {
-    val firestore = Firebase.firestore
-
-    val userId = FirebaseAuth.getInstance().currentUser?.uid
-    val userRef = firestore.collection("Users").document(userId!!)
+    private val firestore = Firebase.firestore
+    private val userId = FirebaseAuth.getInstance().currentUser?.uid
+    private val userRef = firestore.collection("Users").document(userId!!)
     private val _UiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _UiState
 
@@ -63,7 +39,7 @@ class ProfileScreenViewModel @Inject constructor() : ViewModel() {
                     userDate = document.getString("birthDate")
                 )
                 val profileImageUrl = document.getString("profileImageUrl")
-                Log.d("ProfileScreen", "profileImageUrl from Firestore: $profileImageUrl")
+                Log.d("ProfileScreen", "profileImageUrl from Firestorm: $profileImageUrl")
                 _UiState.value = _UiState.value.copy(
                     profileImageUrl = profileImageUrl?.let { Uri.parse(it) }
                 )
@@ -110,7 +86,7 @@ class ProfileScreenViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    suspend fun getDownloadUrlForImage(imagePath: String): String? {
+    private suspend fun getDownloadUrlForImage(imagePath: String): String? {
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
         val imageRef = storageRef.child(imagePath)
@@ -130,7 +106,7 @@ class ProfileScreenViewModel @Inject constructor() : ViewModel() {
         userEmail: String
     ): Boolean {
         return try {
-            userRef.get().addOnSuccessListener { document ->
+            userRef.get().addOnSuccessListener {
                 val userProfile = hashMapOf(
                     "name" to userName,
                     "birthDate" to userDate,

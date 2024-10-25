@@ -1,9 +1,7 @@
 package com.example.reccomendation_app_courswork.Screens
 
 import android.annotation.SuppressLint
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
@@ -18,14 +16,13 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.reccomendation_app_courswork.R
-import com.example.reccomendation_app_courswork.navigation.AppNavGraph
 import com.example.reccomendation_app_courswork.navigation.NavControllerForHomeScreen
 
 sealed class BottomHomeScreenNavigation(val title: String, val iconId: Int, val route: String) {
-    object CatalogScreen :
+    data object CatalogScreen :
         BottomHomeScreenNavigation("Каталог", R.drawable.catalogicon, "CatalogScreen")
 
-    object ProfileScreen :
+    data object ProfileScreen :
         BottomHomeScreenNavigation("Профиль", R.drawable.profileicon, "ProfileScreen")
 }
 
