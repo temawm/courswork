@@ -21,7 +21,7 @@ class Converters  {
             return null
         }
         val stream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream) // Вы можете выбрать другой формат и качество
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
         return stream.toByteArray()
     }
 

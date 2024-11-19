@@ -1,6 +1,7 @@
 package com.example.reccomendation_app_courswork.Screens
 
 
+import android.graphics.Bitmap
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -10,6 +11,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.reccomendation_app_courswork.googleBooks.BookItem
 import com.example.reccomendation_app_courswork.googleBooks.createGoogleBooksService
+import com.example.reccomendation_app_courswork.roomInterface.BookDao
+import com.example.reccomendation_app_courswork.roomInterface.BookEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -17,7 +20,9 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
-class CatalogScreenViewModel @Inject constructor(): ViewModel() {
+class CatalogScreenViewModel @Inject constructor(
+    private val bookDao: BookDao
+): ViewModel() {
     var topBooks by mutableStateOf<List<BookItem>>(emptyList())
         private set
     var isLoadingNextPage by mutableStateOf(false)
@@ -55,14 +60,23 @@ class CatalogScreenViewModel @Inject constructor(): ViewModel() {
         }
     }
 
-//    suspend fun insertBookDetailsInDatabase(book: BookItem, bitmap: Bitmap?): BookEntity {
-//        return BookEntity(
-//            id = book.id,
-//            title = book.volumeInfo.title,
-//            authors = book.volumeInfo.authors,
-//            publishedDate = book.volumeInfo.publishedDate,
-//            description = book.volumeInfo.description,
-//            thumbnail = bitmap,
-//        )
-//    }
+    fun saveBookToDatabase(book: BookItem, bitmap: Bitmap?) {
+        viewModelScope.launch {
+            insertBookDetailsInDatabase(book, bitmap)
+        }
+    }
+
+    suspend fun insertBookDetailsInDatabase(book: BookItem, bitmap: Bitmap?) {
+        val entities = BookEntity(
+                id = book.id,
+                title = book.volumeInfo.title,
+                authors = book.volumeInfo.authors,
+                publishedDate = book.volumeInfo.publishedDate,
+                description = book.volumeInfo.description,
+                thumbnail = bitmap
+            )
+        withContext(Dispatchers.IO) {
+            bookDao.insertBook(entities)
+        }
+    }
 }

@@ -163,7 +163,10 @@ fun CatalogScreen(navHostController: NavHostController, catalogScreenViewModel: 
                                         tint = if(enabledHeart) Color.Red else Color.Gray,
                                         modifier = Modifier
                                             .size(36.dp)
-                                            .clickable { enabledHeart = !enabledHeart }
+                                            .clickable {
+                                                enabledHeart = !enabledHeart
+                                                catalogScreenViewModel.saveBookToDatabase(book, bitmap = imageBitmap)
+                                            }
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                 }

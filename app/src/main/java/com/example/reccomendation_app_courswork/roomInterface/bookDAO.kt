@@ -11,6 +11,6 @@ interface BookDao {
     suspend fun getAllBooks(): List<BookEntity>
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insertBook(books: List<BookEntity>)
+    suspend fun insertBook(book: BookEntity)
 
 }

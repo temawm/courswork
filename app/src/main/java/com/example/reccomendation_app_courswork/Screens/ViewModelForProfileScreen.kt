@@ -3,6 +3,7 @@ package com.example.reccomendation_app_courswork.Screens
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.example.reccomendation_app_courswork.roomInterface.BookDao
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -23,7 +24,9 @@ data class ProfileUiState(
 )
 
 @HiltViewModel
-class ProfileScreenViewModel @Inject constructor() : ViewModel() {
+class ProfileScreenViewModel @Inject constructor(
+    private val bookDao: BookDao
+) : ViewModel() {
     private val firestore = Firebase.firestore
     private val userId = FirebaseAuth.getInstance().currentUser?.uid
     private val userRef = firestore.collection("Users").document(userId!!)
