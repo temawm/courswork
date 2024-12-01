@@ -3,7 +3,9 @@ package com.example.reccomendation_app_courswork.Screens
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.reccomendation_app_courswork.roomInterface.BookDao
+import com.example.reccomendation_app_courswork.roomInterface.BookEntity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -12,6 +14,7 @@ import com.google.firebase.storage.ktx.storage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -27,6 +30,8 @@ data class ProfileUiState(
 class ProfileScreenViewModel @Inject constructor(
     private val bookDao: BookDao
 ) : ViewModel() {
+    private val _books = MutableStateFlow<List<BookEntity>>(emptyList())
+    val books: StateFlow<List<BookEntity>> = _books
     private val firestore = Firebase.firestore
     private val userId = FirebaseAuth.getInstance().currentUser?.uid
     private val userRef = firestore.collection("Users").document(userId!!)
@@ -34,6 +39,7 @@ class ProfileScreenViewModel @Inject constructor(
     val uiState: StateFlow<ProfileUiState> = _UiState
 
     init {
+        loadBooks()
         userRef.get().addOnSuccessListener { document ->
             if (document.exists()) {
                 _UiState.value = _UiState.value.copy(
@@ -125,6 +131,14 @@ class ProfileScreenViewModel @Inject constructor(
         } catch (e: Exception) {
             Log.d("updateInfo", "$e")
             false
+        }
+    }
+
+    private fun loadBooks() {
+        viewModelScope.launch {
+            bookDao.getAllBooks().collect { bookList ->
+                _books.value = bookList
+            }
         }
     }
 }

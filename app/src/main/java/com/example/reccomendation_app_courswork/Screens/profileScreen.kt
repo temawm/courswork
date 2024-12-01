@@ -73,14 +73,14 @@ import java.net.URLEncoder
 @Composable
 
 fun ProfileScreen(profileScreenViewModel: ProfileScreenViewModel) {
-    val scrollState = rememberScrollState()
+
+    val favoriteCards = profileScreenViewModel.books.collectAsState()
     val uiState by profileScreenViewModel.uiState.collectAsState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
-            .verticalScroll(scrollState),
+            .background(Color.White),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -307,97 +307,95 @@ fun ProfileScreen(profileScreenViewModel: ProfileScreenViewModel) {
             modifier = Modifier
                 .fillMaxSize()
         ) {
+            items(favoriteCards.value) { book ->
+                 Card(
+                    modifier = Modifier
+                        .width(230.dp)
+                        .height(350.dp)
+                        .padding(6.dp)
+                        .clickable {
+                        },
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 12.dp
+                    ),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    )
+                ) {
+                     Image(
+                            bitmap = book.thumbnail!!.asImageBitmap(),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .height(220.dp)
+                                .width(180.dp)
+                                .padding(start = 10.dp, end = 10.dp, top = 10.dp)
+                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 5.dp, end = 5.dp, top = 7.dp),
+                            verticalArrangement = Arrangement.Top,
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Text(
+                                text = book.title,
+                                fontSize = 16.sp,
+                                color = Color.Black,
+                                maxLines = 1
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = book.authors?.joinToString(", ")?: "Автор неизвестен",
+                                fontSize = 12.sp,
+                                color = Color.LightGray,
+                                maxLines = 1
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                text = book.publishedDate?: " ",
+                                textAlign = TextAlign.Start,
+                                fontSize = 9.sp,
+                                color = Color.Gray,
+                                maxLines = 1
+                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
+                                    .padding(top = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ){
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(
+                                    painter = painterResource(id = R.drawable.addicon),
+                                    contentDescription = "Add a book",
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(36.dp)
+                                )
+                                Text(
+                                    text = "|",
+                                    textAlign = TextAlign.Center,
+                                    color = Color.LightGray,
+                                    fontSize = 18.sp
+                                )
+                                Icon(
+                                    painter = painterResource(id = R.drawable.favoriteheart),
+                                    contentDescription = "Favorite",
+                                    tint = Color.Red,
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clickable {
+                                            }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                        }
 
-//             { * ->
-//                 Card(
-//                    modifier = Modifier
-//                        .width(230.dp)
-//                        .height(350.dp)
-//                        .padding(6.dp)
-//                        .clickable {
-//                        },
-//                    elevation = CardDefaults.cardElevation(
-//                        defaultElevation = 12.dp
-//                    ),
-//                    colors = CardDefaults.cardColors(
-//                        containerColor = Color.White
-//                    )
-//                ) {
-//                     Image(
-//                            bitmap = imageBitmap!!.asImageBitmap(),
-//                            contentDescription = null,
-//                            modifier = Modifier
-//                                .height(220.dp)
-//                                .width(180.dp)
-//                                .padding(start = 10.dp, end = 10.dp, top = 10.dp)
-//                        )
-//                        Column(
-//                            modifier = Modifier
-//                                .fillMaxWidth()
-//                                .padding(start = 5.dp, end = 5.dp, top = 7.dp),
-//                            verticalArrangement = Arrangement.Top,
-//                            horizontalAlignment = Alignment.Start
-//                        ) {
-//                            Text(
-//                                text = ,
-//                                fontSize = 16.sp,
-//                                color = Color.Black,
-//                                maxLines = 1
-//                            )
-//                            Spacer(modifier = Modifier.height(2.dp))
-//                            Text(
-//                                text = ?: "Автор неизвестен",
-//                                fontSize = 12.sp,
-//                                color = Color.LightGray,
-//                                maxLines = 1
-//                            )
-//                            Spacer(modifier = Modifier.height(2.dp))
-//                            Text(
-//                                modifier = Modifier
-//                                    .fillMaxWidth(),
-//                                text = ?: " ",
-//                                textAlign = TextAlign.Start,
-//                                fontSize = 9.sp,
-//                                color = Color.Gray,
-//                                maxLines = 1
-//                            )
-//                            Row(
-//                                modifier = Modifier
-//                                    .fillMaxWidth()
-//                                    .wrapContentHeight()
-//                                    .padding(top = 10.dp),
-//                                horizontalArrangement = Arrangement.SpaceBetween,
-//                                verticalAlignment = Alignment.CenterVertically
-//                            ){
-//                                Spacer(modifier = Modifier.width(8.dp))
-//                                Icon(
-//                                    painter = painterResource(id = R.drawable.addicon),
-//                                    contentDescription = "Add a book",
-//                                    tint = Color.Black,
-//                                    modifier = Modifier.size(36.dp)
-//                                )
-//                                Text(
-//                                    text = "|",
-//                                    textAlign = TextAlign.Center,
-//                                    color = Color.LightGray,
-//                                    fontSize = 18.sp
-//                                )
-//                                Icon(
-//                                    painter = painterResource(id = R.drawable.favoriteheart),
-//                                    contentDescription = "Favorite",
-//                                    tint = if(enabledHeart) Color.Red else Color.Gray,
-//                                    modifier = Modifier
-//                                        .size(36.dp)
-//                                        .clickable {
-//                                            enabledHeart = !enabledHeart
-//                                            }
-//                                )
-//                                Spacer(modifier = Modifier.width(8.dp))
-//                            }
-//                        }
-//
-//                }
-//            }
+                }
+            }
         }
 
 

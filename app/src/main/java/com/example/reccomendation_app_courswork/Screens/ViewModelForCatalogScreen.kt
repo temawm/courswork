@@ -77,6 +77,7 @@ class CatalogScreenViewModel @Inject constructor(
             )
         withContext(Dispatchers.IO) {
             bookDao.insertBook(entities)
+            Log.d("BookItemInsideInfo", "InsertIsSuccessful")
         }
     }
 }
