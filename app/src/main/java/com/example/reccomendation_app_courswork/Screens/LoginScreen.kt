@@ -75,6 +75,7 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(32.dp))
             Text(
                 text = if (uiState.signInOrUp) "Авторизация" else "Регистрация",
                 modifier = Modifier
@@ -149,7 +150,9 @@ fun LoginScreen(
                     .wrapContentWidth()
                     .padding(12.dp)
                     .clickable {
-                        if (uiState.signInOrUp) loginViewModel.showPopup() else loginViewModel.toggleSignInOrUp(true)
+                        if (uiState.signInOrUp) loginViewModel.showPopup() else loginViewModel.toggleSignInOrUp(
+                            true
+                        )
                     },
                 textAlign = TextAlign.Center,
                 color = if (uiState.failedSignUp == false && !uiState.signInOrUp) Color.Gray else colorResource(id = R.color.authorizationMark),
